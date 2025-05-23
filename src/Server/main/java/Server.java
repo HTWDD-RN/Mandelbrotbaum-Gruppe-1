@@ -1,12 +1,11 @@
-package Server;
+package com.mandelbrotbaum.server;
 
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-
-import sharedObjects.CalculationModel;
-import sharedObjects.CalculationModelImpl;
+import com.mandelbrotbaum.sharedobjects.CalculationModel;
+import com.mandelbrotbaum.sharedobjects.CalculationModelImpl;
 
 public class Server {
     public static void main(String[] args) {

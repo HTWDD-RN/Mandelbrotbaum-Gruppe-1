@@ -1,0 +1,6 @@
+com/mandelbrotbaum/client/MandelbrotPresenter.class
+com/mandelbrotbaum/client/Ticker.class
+com/mandelbrotbaum/client/Mandelbrotmenge.class
+com/mandelbrotbaum/client/Model.class
+com/mandelbrotbaum/client/MandelbrotView.class
+com/mandelbrotbaum/client/UpdateRequest.class

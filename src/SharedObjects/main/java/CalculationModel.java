@@ -1,4 +1,4 @@
-package sharedObjects;
+package com.mandelbrotbaum.sharedobjects;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

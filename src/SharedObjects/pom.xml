@@ -4,30 +4,19 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mandelbrotbaum</groupId>
-    <artifactId>mandelbrot-group1</artifactId>
+    <artifactId>sharedobjects</artifactId>
     <version>1.0.0</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
-    <properties>
-        <java.version>21</java.version>
-        <spring.version>6.2.6</spring.version>
-    </properties>
-
-    <modules>
-        <module>src/Client</module>
-        <module>src/Server</module>
-        <module>src/SharedObjects</module>
-    </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-    </dependencies>
+    <parent>
+        <groupId>com.mandelbrotbaum</groupId>
+        <artifactId>mandelbrot-group1</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
 
     <build>
+        <sourceDirectory>${basedir}/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -36,6 +25,9 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
                 </configuration>
             </plugin>
         </plugins>
