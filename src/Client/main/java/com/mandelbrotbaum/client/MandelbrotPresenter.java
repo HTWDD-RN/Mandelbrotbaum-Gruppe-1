@@ -1,10 +1,10 @@
 package com.mandelbrotbaum.client;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 
-public class MandelbrotPresenter {
+public class MandelbrotPresenter implements ActionListener {
 
     private final Model model;
     private final MandelbrotView view;
@@ -19,5 +19,14 @@ public class MandelbrotPresenter {
     public void start() {
         view.initView();
         ticker.start();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String action = e.getActionCommand();
+        if (action.equals("Ausführen")) {
+            System.out.println("pressed: " + action);
+            System.out.println("Zoomfactor: " + view.getZoomFactor());
+        }
     }
 }
