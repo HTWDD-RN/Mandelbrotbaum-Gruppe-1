@@ -16,7 +16,7 @@
     </parent>
 
     <build>
-        <sourceDirectory>${basedir}/main/java/com/mandelbrotbaum/sharedobjects</sourceDirectory>
+        <sourceDirectory>${basedir}/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
