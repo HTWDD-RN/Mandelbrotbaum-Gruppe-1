@@ -2,20 +2,16 @@ package com.mandelbrotbaum.server;
 
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-
-import com.mandelbrotbaum.sharedobjects.CalculationModel;
-import com.mandelbrotbaum.sharedobjects.CalculationModelImpl;
 
 public class Server {
     public static void main(String[] args) {
         try {
+            LocateRegistry.createRegistry(1099); // Start RMI registry
 
-            LocateRegistry.createRegistry(1099);
+            MasterImpl master = new MasterImpl();
+            Naming.rebind("Master", master); // Bind the master object
 
-            CalculationModel calculationModel = new CalculationModelImpl();
-            Naming.rebind("CalculationModel", calculationModel);
-            System.out.println("CalculationModel-Server gestartet");
+            System.out.println("Master-Server gestartet");
         } catch (Exception e) {
             System.out.println("Ausnahme: " + e.getMessage());
             e.printStackTrace();
