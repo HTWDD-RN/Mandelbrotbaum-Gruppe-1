@@ -2,6 +2,8 @@ package com.mandelbrotbaum.client;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.text.NumberFormat;
+
 import javax.swing.*;
 
 public class MandelbrotView extends JPanel {
@@ -12,8 +14,16 @@ public class MandelbrotView extends JPanel {
     private MandelbrotMouseWheelListener mouseWheelListener;
     private JFrame frame;
     private JSpinner zoomSpinner = null;
-    private final String[] s1 = {"1024 x 768", "1920 x 1080"};
+    private JSpinner numberOfStepsSpinner = null;
+    private JSpinner workerSpinner = null;
+    private JSpinner iterationSpinner = null;
+    private JComboBox<String> resolutionComboBox = null;
+    private final String[] resolutions = {"1024 x 768", "1920 x 1080"};
 
+    /**
+     * MandelbrotView constructor
+     * @param model
+     */
     public MandelbrotView(Model model) {
         this.model = model;
         this.zoomSpinner = new JSpinner(new SpinnerNumberModel(0.8,0,10,0.2));
@@ -51,6 +61,41 @@ public class MandelbrotView extends JPanel {
         return (double)zoomSpinner.getValue();
     }
 
+    /**
+     * Returns the JSpinner used to set the number of steps
+     * @return JSpinner for the number of steps
+     */
+    public JSpinner getNumberOfStepsSpinner() {
+        return this.numberOfStepsSpinner;
+    }
+
+    /**
+     * returns the JSpinner used to set the number of worker
+     * @return JSpinner for the number of worker
+     */
+    public JSpinner getWorkSpinner() {
+        return this.workerSpinner;
+    }  
+
+    /**
+     * return the JSpinner used to set the number of iterations
+     * @return JSpinner for the number if iterations
+     */
+    public JSpinner getIterationSpinner() {
+        return this.iterationSpinner;
+    }
+
+    /**
+     * returns the combo box used to select the resolution.
+     * @return JComboBox for the resulolutuinthe resolution selection combo box
+     */
+    public JComboBox<String> getResolutionComboBox() {
+        return resolutionComboBox;
+    }
+
+    /**
+     * Initializes the main application window (JFrame) and sets up the graphical user interface for the Mandelbrot application.
+     */
     public void initView() {
         frame = new JFrame("Mandelbrot Gruppe 1");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -60,31 +105,49 @@ public class MandelbrotView extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(10,10, 10, 10));
         
         panel.add(new JLabel("Auflösung: "));
-        panel.add(new JComboBox<String>(s1));
+        
+        resolutionComboBox = new JComboBox<String>(resolutions);
+        panel.add(resolutionComboBox);
 
         panel.add(new JLabel("Zoomfaktor: "));
         panel.add(zoomSpinner);
 
         panel.add(new JLabel("Stufenanzahl: "));
-        panel.add(new JSpinner(new SpinnerNumberModel(100, 0, 100, 1)));
+        numberOfStepsSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 100, 1));
+        panel.add(numberOfStepsSpinner);
+        
 
         panel.add(new JLabel("Anzahl Worker: "));
-        panel.add(new JSpinner(new SpinnerNumberModel(4, 2, 16, 2)));
+        workerSpinner = new JSpinner(new SpinnerNumberModel(4,2,16,2));
+        panel.add(workerSpinner);
 
         panel.add(new JLabel("Iterationsanzahl: "));
-        panel.add(new JSpinner(new SpinnerNumberModel(100, 1, 1000, 1)));
+        iterationSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 1000, 1));
+        panel.add(iterationSpinner);
 
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
+
+        NumberFormat format = NumberFormat.getNumberInstance();
+        format.setMinimumFractionDigits(0);
+        format.setMaximumFractionDigits(10);
 
         panel.add(new JLabel("Zoompunkt: "));
-        panel.add(new JTextField("x-position",16));
-        panel.add(new JTextField("y-position",16));
+        JTextField xPosField = new JTextField("x-position",16);
+        panel.add(xPosField);
+        JTextField yPosField = new JTextField("y-position",16);
+        panel.add(yPosField);
 
         JButton exec = new JButton("Ausführen");
         panel.add(exec);
 
+        // Change Listeners
+        numberOfStepsSpinner.addChangeListener(this.presenter);
+        workerSpinner.addChangeListener(this.presenter);
+        iterationSpinner.addChangeListener(this.presenter);
+
         // Action Listeners
+        resolutionComboBox.addActionListener(this.presenter);
         exec.addActionListener(this.presenter);
         this.addMouseListener(this.mouseListener);
         this.addMouseWheelListener(this.mouseWheelListener);
