@@ -1,6 +1,7 @@
 package com.mandelbrotbaum.server;
 
 import com.mandelbrotbaum.sharedobjects.*;
+import com.mandelbrotbaum.worker.*;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -50,7 +51,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             int finalEndY = endY;
 
             Future<int[][]> future = executor.submit(() -> {
-                return worker.compute(); // TODO
+                return null;//worker.compute(); // TODO
             });
 
             futures.add(future);

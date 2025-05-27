@@ -14,11 +14,7 @@ public class UpdateRequest implements Runnable {
     }
 
     public void run() {
-        if(model.dbgDrawAnz <= model.dbgRepaintAnz){
-            model.drawMandelbrot();
-        }
-        else{
-            view.repaint();
-        }
+        model.drawMandelbrot();
+        view.repaint();
     }
 }

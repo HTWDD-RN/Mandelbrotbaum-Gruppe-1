@@ -1,6 +1,6 @@
 package com.mandelbrotbaum.worker;
 
-import sharedobjects.*;
+import com.mandelbrotbaum.sharedobjects.*;
 
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;

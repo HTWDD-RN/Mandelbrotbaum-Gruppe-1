@@ -131,6 +131,8 @@ public class MandelbrotView extends JPanel {
         NumberFormat format = NumberFormat.getNumberInstance();
         format.setMinimumFractionDigits(0);
         format.setMaximumFractionDigits(10);
+        JFormattedTextField xposField = new JFormattedTextField(format);
+        JFormattedTextField yposField = new JFormattedTextField(format);
 
         panel.add(new JLabel("Zoompunkt: "));
         JTextField xPosField = new JTextField("x-position",16);
@@ -164,8 +166,6 @@ public class MandelbrotView extends JPanel {
         super.paintComponent(g);
         synchronized (model){
             g.drawImage(model.getImage(),10, 40, this);
-            System.out.println("JPanel.paintComponent()");
-            model.dbgRepaintAnz += 1;
         }
     }
 }
