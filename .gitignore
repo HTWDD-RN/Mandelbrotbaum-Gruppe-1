@@ -27,6 +27,12 @@ replay_pid*
 src/Client/target
 src/Server/target
 src/SharedObjects/target
+src/Worker/target
 
 # cache folder
 .vscode
+
+# mvn 
+src/Client/dependency-reduced-pom.xml
+src/Server/dependency-reduced-pom.xml
+src/Worker/dependency-reduced-pom.xml
