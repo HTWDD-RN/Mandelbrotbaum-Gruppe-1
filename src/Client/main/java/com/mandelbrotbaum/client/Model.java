@@ -36,7 +36,24 @@ public class Model {
     private double maxZoom = 1.5;
     private double minZoom = 0.000000000000000000000000000000000000000000000000000001;
     private double _centerXfloat;
+    public void setCenterXfloat(int centerXpx){
+        if(centerXpx < width){
+            _centerXfloat = lastFrame.convertXfromPxToFloat(centerXpx);
+        }
+    }
+    public double getCenterXfloat(){
+        return _centerXfloat;
+    }
+
     private double _centerYfloat;
+    public void setCenterYfloat(int centerYpx){
+        if(centerYpx < height){
+            _centerYfloat = lastFrame.convertYfromPxToFloat(centerYpx);
+        }
+    }
+    public double getCenterYfloat(){
+        return _centerYfloat;
+    }
  
     private int height;
     private int width;
@@ -48,13 +65,22 @@ public class Model {
     private int stripSize = 50; //how many lines one worker have to process at once
     private Queue<MandelbrotFrame> frameCache = new LinkedList<MandelbrotFrame>();
     private MandelbrotFrame lastFrame;
+    public double getZoom(){
+        return lastFrame.zoom;
+    }
     private WorkAssigner wa;
 
     public Model(int width, int height) {
         this.width = width;
         this.height = height;
-        this._centerXfloat = -0.34837308755059104;
-        this._centerYfloat = -0.6065038451823017;
+
+        //original Zoompunkt
+        //this._centerXfloat = -0.34837308755059104;
+        //this._centerYfloat = -0.6065038451823017;
+
+        //Zoompunkt v02
+        this._centerXfloat = -0.15088753461782098;
+        this._centerYfloat = -1.043272178315116;
 
         this.setWorkerCount(16);
 
@@ -134,7 +160,7 @@ public class Model {
                     }
                 }
             }
-            System.out.println("Model.drawMangelbrot(): frame gezeichnet, zoom=" + f.zoom + "; dbgDrawAnz=" + dbgDrawAnz);
+            //System.out.println("Model.drawMangelbrot(): frame gezeichnet, zoom=" + f.zoom + "; dbgDrawAnz=" + dbgDrawAnz);
             dbgDrawAnz += 1;
         }
 
@@ -341,7 +367,6 @@ public class Model {
             }
 
             f.isReady = true;
-            System.out.println("Worker: frame ready, zoom=" + f.zoom);
         }
         
     }
