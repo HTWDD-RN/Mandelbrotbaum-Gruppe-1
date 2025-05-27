@@ -164,6 +164,8 @@ public class MandelbrotView extends JPanel {
         super.paintComponent(g);
         synchronized (model){
             g.drawImage(model.getImage(),10, 40, this);
+            System.out.println("JPanel.paintComponent()");
+            model.dbgRepaintAnz += 1;
         }
     }
 }
