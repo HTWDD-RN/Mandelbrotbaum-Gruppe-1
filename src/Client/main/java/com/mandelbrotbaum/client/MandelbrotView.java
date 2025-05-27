@@ -128,12 +128,6 @@ public class MandelbrotView extends JPanel {
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMinimumFractionDigits(0);
-        format.setMaximumFractionDigits(10);
-        JFormattedTextField xposField = new JFormattedTextField(format);
-        JFormattedTextField yposField = new JFormattedTextField(format);
-
         panel.add(new JLabel("Zoompunkt: "));
         JTextField xPosField = new JTextField("x-position",16);
         panel.add(xPosField);
