@@ -27,3 +27,6 @@ replay_pid*
 src/Client/target
 src/Server/target
 src/SharedObjects/target
+
+# cache folder
+.vscode
