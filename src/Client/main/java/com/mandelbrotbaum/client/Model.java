@@ -3,6 +3,9 @@ package com.mandelbrotbaum.client;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -11,19 +14,36 @@ import com.mandelbrotbaum.sharedobjects.CalculationModelImpl;
 public class Model {
     private final BufferedImage image;
 
-    int MAX_ITERATIONS = 1000;
-    int paletteSize = 25;
-    double zoomFaktor = 0.8;
-    double maxZoom = 1;
-    double minZoom = 0.000000000000000000000000000000000000000000000000000001;
-    double _centerXfloat;
-    double _centerYfloat;
+    public int MAX_ITERATIONS = 1000;
+    public double zoomFaktor = 0.8;
+    public boolean isStopped = true;
+    private ArrayList<MandelbrotWorker> _workerList = new ArrayList<>();
+    public void setWorkerCount(int cnt){
+        if(cnt > _workerList.size()){
+            for(int i= _workerList.size() + 1; i<= cnt; i++){
+                _workerList.add(null);
+            }
+        }
+        else if(cnt < _workerList.size()){
+            for(int i=_workerList.size() - 1; i> cnt -1 ; i--){
+                _workerList.set(i, null);
+                _workerList.remove(i);
+            }
+        }
+    }
+
+    private int paletteSize = 25;
+    private double maxZoom = 1.5;
+    private double minZoom = 0.000000000000000000000000000000000000000000000000000001;
+    private double _centerXfloat;
+    private double _centerYfloat;
  
     private int height;
     private int width;
     private double startHeightFloat = 2;
     private double startWidthFloat = 3;
-    public int dbgReadyAnz = 0;
+    public int dbgRepaintAnz = 0;
+    public int dbgDrawAnz = 0;
     private int cacheSize = 10; //how many frames are cached
     private int stripSize = 50; //how many lines one worker have to process at once
     private Queue<MandelbrotFrame> frameCache = new LinkedList<MandelbrotFrame>();
@@ -36,6 +56,8 @@ public class Model {
         this._centerXfloat = -0.34837308755059104;
         this._centerYfloat = -0.6065038451823017;
 
+        this.setWorkerCount(16);
+
         //align mandelbrot-frame-size with pixel-frame-size
         double wFaktor = width / startWidthFloat;
         double hFaktor = height / startHeightFloat;
@@ -47,6 +69,7 @@ public class Model {
 
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
+        //first frame on zoom=1;
         lastFrame = new MandelbrotFrame(width, height);
         lastFrame.setCenterXfloat(_centerXfloat);
         lastFrame.setCenterYfloat(_centerYfloat);
@@ -59,12 +82,7 @@ public class Model {
         init_WorkAssigner();
         wa.newWork(lastFrame);
 
-        //caching some frames before view starts tu use them
-        for(int i=0; i<cacheSize; i++)
-        {
-            init_NextFrame();
-            wa.newWork(lastFrame);
-        }
+        
     }
 
     public int getWidth() {
@@ -83,34 +101,62 @@ public class Model {
         //get the first frame from the beginning of the queue
         MandelbrotFrame f = frameCache.peek();
 
-        if(!f.isReady || dbgReadyAnz < cacheSize - 2) return;
-
-        if(frameCache.size()>1){
-            f = frameCache.poll();
+        if(!f.isReady) {
+            if(f.inProgress){
+                return;
+            }
         }
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int iterations = f.matrix[x][y];
+        //no need to repaint 
+        if(!(f.zoom == lastFrame.zoom && 
+           f._centerXfloat == lastFrame._centerXfloat && 
+           f._centerYfloat == lastFrame._centerYfloat && dbgRepaintAnz > 1)){;
 
-                // dbgStats.set(iterations, dbgStats.get(iterations)+1);
+            if(frameCache.size()>1){
+                f = frameCache.poll();
+            }
 
-                if (iterations == MAX_ITERATIONS) {
-                    int fillCol = Color.BLACK.getRGB();
-                    image.setRGB(x, y, fillCol);
-                } else {
-                    int fillCol = getRgbFromInt(iterations, paletteSize);
-                    image.setRGB(x, y, fillCol);
-                    if(fillCol > 1){
-                        int dummy = 5;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    int iterations = f.matrix[x][y];
+
+                    // dbgStats.set(iterations, dbgStats.get(iterations)+1);
+
+                    if (iterations == MAX_ITERATIONS) {
+                        int fillCol = Color.BLACK.getRGB();
+                        image.setRGB(x, y, fillCol);
+                    } else {
+                        int fillCol = getRgbFromInt(iterations, paletteSize);
+                        image.setRGB(x, y, fillCol);
+                        if(fillCol > 1){
+                            int dummy = 5;
+                        }
+                    }
+                }
+            }
+            System.out.println("Model.drawMangelbrot(): frame gezeichnet, zoom=" + f.zoom + "; dbgDrawAnz=" + dbgDrawAnz);
+            dbgDrawAnz += 1;
+        }
+
+
+        //now put frames to fill the queue
+        if(!isStopped || dbgRepaintAnz < 2){
+            if(dbgRepaintAnz < 2){
+                if(init_NextFrame()){
+                    wa.newWork(lastFrame);
+                }
+            }
+            else if(!isStopped){
+                while (frameCache.size() < cacheSize) {
+                    if(init_NextFrame()){
+                        wa.newWork(lastFrame);
+                    }   
+                    else{
+                        break;
                     }
                 }
             }
         }
-
-        //now put one frame to the end of the queue
-        init_NextFrame();
-        wa.newWork(lastFrame);
         
     }
 
@@ -119,7 +165,8 @@ public class Model {
         wa = new WorkAssigner();
     }
 
-    public void init_NextFrame(){
+    public boolean init_NextFrame(){
+        boolean out = false;
         MandelbrotFrame f = new MandelbrotFrame(width, height);
         f.zoom = lastFrame.zoom * zoomFaktor;
         if(f.zoom > minZoom && f.zoom < maxZoom && frameCache.size() < cacheSize){
@@ -133,10 +180,12 @@ public class Model {
             f.setCenterYfloat(_centerYfloat);
             frameCache.add(f);
             lastFrame = f;
+            out = true;
         }
         else{
             //last frame remains on the screen and no new frames required
         }
+        return out;
     }
 
     /**
@@ -194,6 +243,7 @@ public class Model {
         private int widthPx;
         private int heightPx;
         public boolean isReady = false;
+        public boolean inProgress = false;
         public double widthFloat;
         public double heightFloat;
         public double zoom;
@@ -291,16 +341,36 @@ public class Model {
             }
 
             f.isReady = true;
-            dbgReadyAnz += 1;
+            System.out.println("Worker: frame ready, zoom=" + f.zoom);
         }
         
     }
 
-    public class WorkAssigner{ //this thread waits for a free worker and assigns a work to it
+    //this class should be a thread, that waits for a free worker and assigns a work to it
+    public class WorkAssigner{ 
         
         public void newWork(MandelbrotFrame f){
-            MandelbrotWorker t = new MandelbrotWorker(f);
-            t.start();
+            //Instant tStart = Instant.now();
+            boolean found = false;
+            //do{
+                for(int i = 0; i<_workerList.size(); i++){
+                    MandelbrotWorker w = _workerList.get(i);
+                    if(w == null || !w.isAlive()){
+                        found = true;
+                        MandelbrotWorker t = new MandelbrotWorker(f);
+                        _workerList.set(i, t);
+                        f.inProgress = true;
+                        t.start();
+                        break;
+                    }
+                }
+            //}
+            //while(!found || Duration.between(tStart, Instant.now()).getSeconds() < 5);
+
+            if(!found){
+                //we didn't get a worker, but the frame can't stay as undone
+                f.isReady = true;
+            }
         }
 
 

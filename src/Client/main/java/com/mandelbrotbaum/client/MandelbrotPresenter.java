@@ -65,6 +65,8 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         if (action.equals("Ausführen")) {
             System.out.println("pressed: " + action);
             System.out.println("Zoomfactor: " + view.getZoomFactor());
+            model.isStopped = !model.isStopped;
+            model.zoomFaktor = view.getZoomFactor();
         }
         else if (e.getSource() == view.getResolutionComboBox()){
              String selected = (String) view.getResolutionComboBox().getSelectedItem();
