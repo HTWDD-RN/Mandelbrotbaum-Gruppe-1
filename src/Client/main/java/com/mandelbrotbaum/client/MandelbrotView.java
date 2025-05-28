@@ -18,6 +18,8 @@ public class MandelbrotView extends JPanel {
     private JSpinner workerSpinner = null;
     private JSpinner iterationSpinner = null;
     private JComboBox<String> resolutionComboBox = null;
+    private JTextField xPosField = null;
+    private JTextField yPosField = null;
     private final String[] resolutions = {"1024 x 768", "1920 x 1080"};
 
     /**
@@ -49,6 +51,22 @@ public class MandelbrotView extends JPanel {
         double current = this.getZoomFactor();
         if (current+(0.2*t) <= 0)   zoomSpinner.setValue((double)0.0);
         else                        zoomSpinner.setValue((double)current+(0.2*t));
+    }
+
+    /**
+     * sets the x coordinate inside the Textfield
+     * @param x
+     */
+    public void setXTextField(int x) {
+        xPosField.setText(Integer.toString(x));
+    }
+
+    /**
+     * sets the y coordinate inside the Textfield
+     * @param y
+     */
+    public void setYTextField(int y) {
+        yPosField.setText(Integer.toString(y));
     }
 
     /**
@@ -129,9 +147,9 @@ public class MandelbrotView extends JPanel {
         panel.add(new JLabel(""));
 
         panel.add(new JLabel("Zoompunkt: "));
-        JTextField xPosField = new JTextField("x-position",16);
+        xPosField = new JTextField("x-position",16);
         panel.add(xPosField);
-        JTextField yPosField = new JTextField("y-position",16);
+        yPosField = new JTextField("y-position",16);
         panel.add(yPosField);
 
         JButton exec = new JButton("Ausführen");

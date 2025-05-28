@@ -10,7 +10,7 @@ public class Mandelbrotmenge {
         Model model = new Model(1024,768);
         MandelbrotView view = new MandelbrotView(model);
         MandelbrotPresenter presenter = new MandelbrotPresenter(model, view);
-        MandelbrotMouseListener mouseListener = new MandelbrotMouseListener(presenter, model);
+        MandelbrotMouseListener mouseListener = new MandelbrotMouseListener(presenter, model, view);
         MandelbrotMouseWheelListener mouseWheelListener = new MandelbrotMouseWheelListener(presenter, model, view);
         view.setAllListeners(presenter, mouseListener, mouseWheelListener);
         presenter.start();

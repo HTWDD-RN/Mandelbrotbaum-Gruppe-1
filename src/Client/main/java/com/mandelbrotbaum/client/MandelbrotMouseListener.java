@@ -6,15 +6,17 @@ import java.awt.event.MouseListener;
 public class MandelbrotMouseListener implements MouseListener {
     private final Model model;
     private final MandelbrotPresenter presenter;
+    private final MandelbrotView view;
     
     /**
      * Constructor of MandelbrotMouseListener
      * @param presenter
      * @param model
      */
-    public MandelbrotMouseListener(MandelbrotPresenter presenter, Model model) {
+    public MandelbrotMouseListener(MandelbrotPresenter presenter, Model model, MandelbrotView view) {
         this.presenter = presenter;
         this.model = model;
+        this.view = view;
     }
 
     /**
@@ -38,6 +40,10 @@ public class MandelbrotMouseListener implements MouseListener {
             System.out.println("Setting Zoompunkt to: (" 
                 + model.getCenterXfloat() + " | " + model.getCenterYfloat() + ")");
             System.out.println("current zoom = " + model.getZoom());
+
+            // setting the x and y coordinate inside the textfields
+            view.setXTextField(correctX);
+            view.setYTextField(correctY);
         }
     }
 
