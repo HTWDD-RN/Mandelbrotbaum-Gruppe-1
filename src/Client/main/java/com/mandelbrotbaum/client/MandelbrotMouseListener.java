@@ -42,8 +42,8 @@ public class MandelbrotMouseListener implements MouseListener {
             System.out.println("current zoom = " + model.getZoom());
 
             // setting the x and y coordinate inside the textfields
-            view.setXTextField(correctX);
-            view.setYTextField(correctY);
+            view.setXTextField(Integer.toString(correctX));
+            view.setYTextField(Integer.toString(correctY));
         }
     }
 

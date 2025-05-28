@@ -5,6 +5,8 @@ import java.awt.image.BufferedImage;
 import java.text.NumberFormat;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class MandelbrotView extends JPanel {
     
@@ -57,16 +59,16 @@ public class MandelbrotView extends JPanel {
      * sets the x coordinate inside the Textfield
      * @param x
      */
-    public void setXTextField(int x) {
-        xPosField.setText(Integer.toString(x));
+    public void setXTextField(String x) {
+        xPosField.setText(x);
     }
 
     /**
      * sets the y coordinate inside the Textfield
      * @param y
      */
-    public void setYTextField(int y) {
-        yPosField.setText(Integer.toString(y));
+    public void setYTextField(String y) {
+        yPosField.setText(y);
     }
 
     /**
@@ -147,20 +149,24 @@ public class MandelbrotView extends JPanel {
         panel.add(new JLabel(""));
 
         panel.add(new JLabel("Zoompunkt: "));
+
         xPosField = new JTextField("x-position",16);
         panel.add(xPosField);
         yPosField = new JTextField("y-position",16);
         panel.add(yPosField);
-
+        
         JButton exec = new JButton("Ausführen");
         panel.add(exec);
-
+        
         // Change Listeners
         numberOfStepsSpinner.addChangeListener(this.presenter);
         workerSpinner.addChangeListener(this.presenter);
         iterationSpinner.addChangeListener(this.presenter);
-
+        
         // Action Listeners
+        MandelbrotTextClickListener resetTextFieldListener = new MandelbrotTextClickListener(this); // yes ik, i am running out of naming ideas
+        xPosField.addMouseListener(resetTextFieldListener);
+        yPosField.addMouseListener(resetTextFieldListener);
         resolutionComboBox.addActionListener(this.presenter);
         exec.addActionListener(this.presenter);
         this.addMouseListener(this.mouseListener);
