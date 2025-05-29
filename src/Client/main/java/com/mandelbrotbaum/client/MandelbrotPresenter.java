@@ -32,7 +32,7 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         if (isUpdating) return;
 
         Object source = e.getSource();
-        System.out.println("Bin im ChangeEvent");
+        // System.out.println("Bin im ChangeEvent");
         if (source == view.getNumberOfStepsSpinner()) {
             int numberSteps = (Integer) view.getNumberOfStepsSpinner().getValue();
             if (numberSteps < 1 || numberSteps > 100) {
@@ -51,7 +51,7 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         }
         else if (source == view.getIterationSpinner()) {
             int numberIteration = (Integer) view.getIterationSpinner().getValue();
-            if (numberIteration > 1 || numberIteration < 1000){
+            if (numberIteration < 1 || numberIteration > 1000){
                 isUpdating = true;
                 view.getIterationSpinner().setValue(100);
                 isUpdating = false;
