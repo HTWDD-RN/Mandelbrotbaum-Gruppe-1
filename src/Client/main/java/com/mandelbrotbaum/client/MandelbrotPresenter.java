@@ -4,27 +4,43 @@ import java.awt.event.ActionListener;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.xml.transform.Source;
 
 import java.awt.event.ActionEvent;
-import javax.swing.*;
 
 public class MandelbrotPresenter implements ActionListener, ChangeListener {
 
     private final Model model;
     private final MandelbrotView view;
-    private final Ticker ticker;
+    private Ticker ticker = null;
     private boolean isUpdating = false;
 
+    /**
+     * Constructor of presenter
+     * @param model
+     * @param view
+     */
     public MandelbrotPresenter(Model model, MandelbrotView view) {
         this.model = model;
         this.view = view;
-        this.ticker = new Ticker(model, view);
     }
 
+    /**
+     * shows the GUI
+     */
     public void start() {
         view.initView();
-        ticker.start();
+        //ticker.start();
+    }
+
+    public void startGenMandelbrot(int x, int y) {
+        if (ticker != null) {ticker.interrupt();}
+        try {
+            ticker = new Ticker(model, view, x, y, model.getWidth(), model.getHeight(), (int)view.getWorkSpinner().getValue(), (int)view.getIterationSpinner().getValue(), view.getZoomFactor(), (int)view.getNumberOfStepsSpinner().getValue());
+            //ticker.start();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -65,6 +81,23 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         if (action.equals("Ausführen")) {
             System.out.println("pressed: " + action);
             System.out.println("Zoomfactor: " + view.getZoomFactor());
+            int x;
+            int y;
+            try { // input validation for x coordinate
+                x = Integer.parseInt(view.getXTextFieldText()) >= 0 ? Integer.parseInt(view.getXTextFieldText()) : 0;
+            } catch (NumberFormatException exeption) {
+                x = 0;
+            }
+            try { // input validation for y coordinate
+                y = Integer.parseInt(view.getYTextFieldText()) >= 0 ? Integer.parseInt(view.getYTextFieldText()) : 0;
+            } catch (NumberFormatException exeption) {
+                y = 0;
+            }
+
+            view.setXTextField(Integer.toString(x));
+            view.setYTextField(Integer.toString(y));
+            this.startGenMandelbrot(x, y);
+
             model.isStopped = !model.isStopped;
             model.zoomFaktor = view.getZoomFactor();
         }

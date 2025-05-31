@@ -3,8 +3,6 @@ package com.mandelbrotbaum.client;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -12,7 +10,7 @@ import java.util.Queue;
 import com.mandelbrotbaum.sharedobjects.CalculationModelImpl;
 
 public class Model {
-    private final BufferedImage image;
+    private BufferedImage image;
 
     public int MAX_ITERATIONS = 1000;
     public double zoomFaktor = 0.8;
@@ -79,8 +77,12 @@ public class Model {
         //this._centerYfloat = -0.6065038451823017;
 
         //Zoompunkt v02
-        this._centerXfloat = -0.15088753461782098;
-        this._centerYfloat = -1.043272178315116;
+        //this._centerXfloat = -0.15088753461782098;
+        //this._centerYfloat = -1.043272178315116;
+
+        //Zoompunkt v02
+        this._centerXfloat = -0.5;
+        this._centerYfloat = 0.0;
 
         this.setWorkerCount(16);
 
@@ -121,6 +123,10 @@ public class Model {
 
     public synchronized BufferedImage getImage() {
         return image;
+    }
+
+    public synchronized void setImage(BufferedImage image) {
+        this.image = image;
     }
 
     public synchronized void drawMandelbrot () {

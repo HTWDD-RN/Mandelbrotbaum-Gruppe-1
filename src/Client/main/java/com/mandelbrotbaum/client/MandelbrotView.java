@@ -1,12 +1,8 @@
 package com.mandelbrotbaum.client;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.text.NumberFormat;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 public class MandelbrotView extends JPanel {
     
@@ -70,6 +66,18 @@ public class MandelbrotView extends JPanel {
     public void setYTextField(String y) {
         yPosField.setText(y);
     }
+
+    /**
+     * get the text from the x coordinate position text field
+     * @return x (String)
+     */
+    public String getXTextFieldText() {return xPosField.getText();}
+
+    /**
+     * get the text from the y coordinate position text field
+     * @return y (String)
+     */
+    public String getYTextFieldText() {return yPosField.getText();}
 
     /**
      * gets the current zoom factor value

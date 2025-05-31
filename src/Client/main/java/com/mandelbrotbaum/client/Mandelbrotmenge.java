@@ -1,9 +1,5 @@
 package com.mandelbrotbaum.client;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import javax.swing.*;
-
 public class Mandelbrotmenge {
 
     public static void main(String[] args) throws InterruptedException {

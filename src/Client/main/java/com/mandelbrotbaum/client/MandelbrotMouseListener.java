@@ -44,6 +44,8 @@ public class MandelbrotMouseListener implements MouseListener {
             // setting the x and y coordinate inside the textfields
             view.setXTextField(Integer.toString(correctX));
             view.setYTextField(Integer.toString(correctY));
+
+            presenter.startGenMandelbrot(correctX, correctY);
         }
     }
 
