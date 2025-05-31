@@ -34,16 +34,12 @@ public class MandelbrotMouseListener implements MouseListener {
             if (correctX > model.getWidth() || correctY > model.getHeight() || correctX < 0 || correctY < 0) {return;} // abort if the click is outside of the image
             System.out.println("pressed panel at: (" + correctX + "," + correctY + ")");
 
-            //@MoD: below is an example of how the settings work in the current model. AlZaj.
-            model.setCenterXfloat(correctX);
-            model.setCenterYfloat(correctY);
-            System.out.println("Setting Zoompunkt to: (" 
-                + model.getCenterXfloat() + " | " + model.getCenterYfloat() + ")");
-            System.out.println("current zoom = " + model.getZoom());
-
             // setting the x and y coordinate inside the textfields
-            view.setXTextField(Integer.toString(correctX));
-            view.setYTextField(Integer.toString(correctY));
+            //view.setXTextField(Integer.toString(correctX));
+            view.setXTextField(Double.toString(model.getLastAnimationFrameXpxToXreal(correctX)));
+            //view.setYTextField(Integer.toString(correctY));
+            view.setYTextField(Double.toString(model.getLastAnimationFrameYpxToYreal(correctY)));
+
         }
     }
 

@@ -23,6 +23,10 @@ public class MandelbrotView extends JPanel {
     private JTextField xPosField = null;
     private JTextField yPosField = null;
     private final String[] resolutions = {"1024 x 768", "1920 x 1080"};
+    private JButton execBtn = null;
+    private JButton playBtn = null;
+    private JLabel jobStatusLbl = null;
+    private JLabel cntWorkersLbl = null;
 
     /**
      * MandelbrotView constructor
@@ -114,6 +118,26 @@ public class MandelbrotView extends JPanel {
     }
 
     /**
+     * hides or sets visible the play button.
+     * @param visible
+     */
+    public void playButtonSetVisiblity(boolean visible){
+        playBtn.setVisible(visible);
+    }
+
+    /**
+     * sets text of the message for the last job status
+     * @param text
+     */
+    public void jobStatusLblSetText(String text){
+        jobStatusLbl.setText(text);
+    }
+
+    public void workersCountLblSetText(String text){
+        cntWorkersLbl.setText(text);
+    }
+
+    /**
      * Initializes the main application window (JFrame) and sets up the graphical user interface for the Mandelbrot application.
      */
     public void initView() {
@@ -121,7 +145,7 @@ public class MandelbrotView extends JPanel {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        JPanel panel = new JPanel(new GridLayout(4, 4, 2, 2));
+        JPanel panel = new JPanel(new GridLayout(5, 4, 2, 2));
         panel.setBorder(BorderFactory.createEmptyBorder(10,10, 10, 10));
         
         panel.add(new JLabel("Auflösung: "));
@@ -137,7 +161,8 @@ public class MandelbrotView extends JPanel {
         panel.add(numberOfStepsSpinner);
         
 
-        panel.add(new JLabel("Anzahl Worker: "));
+        cntWorkersLbl = new JLabel("Anzahl Worker: ");
+        panel.add(cntWorkersLbl);
         workerSpinner = new JSpinner(new SpinnerNumberModel(4,2,16,2));
         panel.add(workerSpinner);
 
@@ -155,8 +180,19 @@ public class MandelbrotView extends JPanel {
         yPosField = new JTextField("y-position",16);
         panel.add(yPosField);
         
-        JButton exec = new JButton("Ausführen");
-        panel.add(exec);
+        execBtn = new JButton("Ausführen");
+        panel.add(execBtn);
+        
+        jobStatusLbl = new JLabel();
+        jobStatusLbl.setForeground(Color.BLUE);
+        panel.add(jobStatusLbl);
+
+        panel.add(new JLabel(""));
+        panel.add(new JLabel(""));
+
+        playBtn = new JButton("Abspielen");
+        playBtn.setVisible(false);
+        panel.add(playBtn);
         
         // Change Listeners
         numberOfStepsSpinner.addChangeListener(this.presenter);
@@ -168,13 +204,14 @@ public class MandelbrotView extends JPanel {
         xPosField.addMouseListener(resetTextFieldListener);
         yPosField.addMouseListener(resetTextFieldListener);
         resolutionComboBox.addActionListener(this.presenter);
-        exec.addActionListener(this.presenter);
+        execBtn.addActionListener(this.presenter);
+        playBtn.addActionListener(this.presenter);
         this.addMouseListener(this.mouseListener);
         this.addMouseWheelListener(this.mouseWheelListener);
 
         frame.add(panel, BorderLayout.NORTH);
-        frame.add(this, BorderLayout.CENTER);
-
+        frame.add(this);
+        
         frame.setSize(model.getWidth() + 40 , model.getHeight() + 220);
         frame.setVisible(true);
     }
@@ -184,7 +221,6 @@ public class MandelbrotView extends JPanel {
         super.paintComponent(g);
         synchronized (model){
             g.drawImage(model.getImage(),10, 40, this);
-            model.dbgRepaintAnz += 1;
         }
     }
 }

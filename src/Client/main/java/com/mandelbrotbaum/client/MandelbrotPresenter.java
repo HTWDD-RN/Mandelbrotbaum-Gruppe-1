@@ -65,11 +65,37 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         if (action.equals("Ausführen")) {
             System.out.println("pressed: " + action);
             System.out.println("Zoomfactor: " + view.getZoomFactor());
-            model.isStopped = !model.isStopped;
-            model.zoomFaktor = view.getZoomFactor();
+            
+            //ToDo: read the following values from GUI
+            int stuffenanzahl = 40;
+            int iterationsanzahl = 1000;
+            double zoompunktX = -0.34837308755059104;
+            double zoompunktY = -0.6065038451823017;
+            double zoomFaktor = 0.8;
+            int anzWorker = 4;
+            int anzThreadsProWorker = 4;
+            boolean divideSingleFrame = true;
+            model.submitJob(stuffenanzahl,
+                            iterationsanzahl,
+                            zoompunktX,
+                            zoompunktY,
+                            zoomFaktor,
+                            anzWorker,
+                            anzThreadsProWorker,
+                            divideSingleFrame);
+        }
+        else if(action.equals("Abspielen")){
+            model.playButtonPressed();
         }
         else if (e.getSource() == view.getResolutionComboBox()){
              String selected = (String) view.getResolutionComboBox().getSelectedItem();
+             if(selected.equals("1920 x 1080")){
+                //model.setFrameSize(1920, 1080);
+                model.setFrameSize(800, 600);
+             }
+             if(selected.equals("1024 x 768")){
+                model.setFrameSize(1024, 768);
+             }
              System.out.println(selected);
         }
     }

@@ -14,11 +14,45 @@ public class UpdateRequest implements Runnable {
     }
 
     public void run() {
-        if(model.dbgDrawAnz <= model.dbgRepaintAnz){
-            model.drawMandelbrot();
+        // - if image changed: show image
+        // - if Status-label changed: show status label
+        // - if play-button visiblity changed: set button visiblity
+        // - ... anz Worker
+
+        boolean needRepaint = false;
+        if(model.changedJobStatus){
+            view.jobStatusLblSetText(model.jobStatusText());
+            model.changedJobStatus = false;
+            //needRepaint = true;
         }
-        else{
+        if(model.changedPlayButtonVisiblity){
+            view.playButtonSetVisiblity(model.playButtonVisible);
+            model.changedPlayButtonVisiblity = false;
+            //needRepaint = true;
+        }
+        if(model.changedCntWorkers){
+            view.workersCountLblSetText("Anzahl Worker(" + model.cntWorkers + ")");
+            model.changedCntWorkers = false;
+            //needRepaint = true;
+        }
+        if(model.changedImage){
+            model.drawMandelbrot();
+            model.changedImage = false;
+            needRepaint = true;
+        }
+        if(needRepaint){
             view.repaint();
         }
+
+        Thread t = new Thread(){
+                public void run(){
+                    try{
+                        model.checkCalculation();
+                    }
+                    catch(Exception e){
+                        System.out.println("Ausnahme in UpdateRequest.run(): " + e.getMessage());
+                    }
+                }};
+            t.start();
     }
 }

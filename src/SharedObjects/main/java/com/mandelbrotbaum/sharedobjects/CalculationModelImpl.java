@@ -9,33 +9,43 @@ public class CalculationModelImpl extends UnicastRemoteObject implements Calcula
         super();
     }
 
-        public int[][] calculateRange(int wPx, int hPx, double wR, double hR, double x0, double y0, int maxIterations) {
-            int[][] a = new int[wPx][hPx];
+    /**
+     * wPx, hPx - raster resolution
+     * wR, hR - real frame size
+     * x0, y0 - top left corner of the frame
+     * maxIterations - Mandelbrot parameter
+     */    
+    public int[][] calculateRange(int wPx, int hPx, double wR, double hR, double x0, double y0, int maxIterations, String workerName) {
+        int[][] a = new int[wPx][hPx];
 
-            double yStep = hR / hPx;
-            double xStep = wR / wPx;
+        double yStep = hR / hPx;
+        double xStep = wR / wPx;
 
-            int max = 0;
+        int max = 0;
 
-            for (int y = 0; y < hPx; y++) {
-                for (int x = 0; x < wPx; x++) {
-                    int c = calculatePoint(x0 + x * xStep, y0 + y * yStep, maxIterations);
+        for (int y = 0; y < hPx; y++) {
+            for (int x = 0; x < wPx; x++) {
+                int c = calculatePoint(x0 + x * xStep, y0 + y * yStep, maxIterations);
 
-                    //debug
-                    if(y == (hPx - 1)){
-                        c = 2;
-                    }
-                    //end debug
+                //debug: last line is white
+                if(y == (hPx - 1)){
+                    c = 2;
+                }
+                //end debug
 
-                    a[x][y] = c;
-                    if (c > max) {
-                        max = c;
-                    }
+                a[x][y] = c;
+                if (c > max) {
+                    max = c;
                 }
             }
-
-            return a;
         }
+
+        PixelFont.outputPixelMatrix(PixelFont.getPixelMatrix(
+            workerName + ", Ecke: (" + x0 + " | " + y0 + "); width: " + wR + "; hight: " + hR + "; zoom = " + (wR/wPx)
+            ), a);
+
+        return a;
+    }
 
         public int calculatePoint(double re, double im, int maxIterations) {
             double x = 0.0;
