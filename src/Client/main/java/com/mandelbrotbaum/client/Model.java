@@ -27,11 +27,11 @@ public class Model {
     /**
      * jobStatus:
      * value -2 - RMI-Connection to Master failed
-     * value -1 - last job failed
-     * value =0 - job in progress or "no job"
+     * value -1 - job in progress or "no job"
+     * value =0 - last job failed
      * value >0 - last job successfully done in nanoseconds
      */
-    private long jobStatus = 0; 
+    private long jobStatus = -1; 
     public boolean changedJobStatus = false;
 
     public int cntWorkers = 0;
@@ -52,6 +52,7 @@ public class Model {
     private int _lastJobWidth = 1024;
     private int _lastJobHeight = 768;
     private int _lastJobSturrenanzahl = 0;
+    private long _lastJobRemainingFrames = 0;
 
     private String errorMsg01 = "";
     private String errorMsg02 = "";
@@ -62,12 +63,17 @@ public class Model {
      * The method queries Master about the status of the current Job.
      * If the Job is done, this method sets flags which are also handled
      * in UpdateRequest.run()
+     * 
+     * achtung: getMaster().getCalculationStatus() is different from jobStatus
+     *   - getCalculationStatus below 0 means: job running, remaining frames nr.
+     *   - jobStatus = -1 means "connection problem"
+     *   - 0 means (for both): job failure;
      */
     public synchronized void checkCalculation(){
         if(isCalculationRunning){
             try{
                 long stat = getMaster().getCalculationStatus();
-                if(stat != 0){
+                if(stat >= 0){
                     jobStatus = stat;
                     isCalculationRunning = false;
                     if(stat > 0){
@@ -80,13 +86,19 @@ public class Model {
                     changedPlayButtonVisiblity = true;
                     changedJobStatus = true;
                 }
+                else{
+                    if(stat != _lastJobRemainingFrames){
+                        _lastJobRemainingFrames = stat;
+                        changedJobStatus = true;
+                    }
+                }
             }
             catch(Exception e){
                 if(errorMsg01.isEmpty()){
                     System.out.println("Ausnahme in Model.checkCalculation()");
                 }
                 isCalculationRunning = false;
-                jobStatus = -1;
+                jobStatus = 0;
                 changedJobStatus = true;
             }
         }
@@ -172,14 +184,14 @@ public class Model {
         if(jobStatus == -2){
             a = "RMI-Connection to Master failed.";
         }
-        else if(jobStatus == -1){
+        else if(jobStatus == 0){
             a = "Job failed.";
         }
         else if(jobStatus > 0){
             a = String.format("Job done. Execution time: %.5f s.", (jobStatus / 1000000000.0));
         }
-        else if(jobStatus == 0 && isCalculationRunning){
-            a = "Job is running.";
+        else if(jobStatus == -1 && isCalculationRunning){
+            a = "Job is running. remaining: " + _lastJobRemainingFrames;
         }
         else{
             int dummy = 5;
@@ -200,13 +212,13 @@ public class Model {
         }
         else{
             _master = m;
-            jobStatus = 0;
+            jobStatus = -1;
             changedJobStatus = true;
         }
     }
 
     public synchronized void drawMandelbrot () {
-        if((jobStatus < 0) || (jobStatus == 0 && !isCalculationRunning)){
+        if((jobStatus == 0 || jobStatus == -2) || (jobStatus == -1 && !isCalculationRunning)){
             return;
         }
 
@@ -288,7 +300,7 @@ public class Model {
                           int anzThreadsProWorker,
                           boolean divideSingleFrame)
     {
-            jobStatus = 0;
+            jobStatus = -1;
             isCalculationRunning = true;
 
             Thread thread = new Thread(){
@@ -312,7 +324,7 @@ public class Model {
                     }
                     catch(Exception e){
                         setMaster(null);
-                        jobStatus = -1; //this is already done in setMaster(null)
+                        jobStatus = 0; //this is already done in setMaster(null)
                         System.out.println("Ausnahme in Model.submitJob(): " + e.getMessage());
                         isCalculationRunning = false;
                     }

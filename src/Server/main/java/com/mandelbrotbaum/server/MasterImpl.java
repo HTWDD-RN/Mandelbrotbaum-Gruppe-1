@@ -6,7 +6,10 @@ import com.mandelbrotbaum.worker.*;
 import java.awt.Color;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -16,9 +19,19 @@ import java.util.concurrent.Future;
 public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
 
     private final List<Worker> workers;
+    
+    //Key - hashcode of the worker, value: count of ping failures;
+    private HashMap<Integer, Integer> workersErrorCount = new HashMap<>();
 
     private boolean isCalculationRunning = false;
-    private long jobStatus = 0;
+    private long jobStatus = -1;
+    public synchronized void incrementJobStatus(int inc){
+        jobStatus += inc;
+        //0 - means error. the logic of the program prevents incrementing to 0.
+        //but sometimes somehow it happenes. -1 means: "one frame remaining".
+        //for now I let it here:
+        if(jobStatus == 0) jobStatus = -1; 
+    }
     private int[][][] frames;
     private int MAX_ITERATIONS;
     private int paletteSize = 25;
@@ -30,24 +43,55 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
 
     @Override
     public void registerWorker(Worker worker) throws RemoteException {
-        workers.add(worker);
-        System.out.println("New Worker registered. Worker count: " + workers.size());
+        boolean found = false;
+        for(int i = 0; i<workers.size(); i++){
+            if(workers.get(i).hashCode() == worker.hashCode()){
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            workers.add(worker);
+            workersErrorCount.put(worker.hashCode(), 0);
+            System.out.println("New Worker registered: " + worker.hashCode() + ". Worker count: " + workers.size());
+        }
+        else{
+            System.out.println("Worker trying to register, but it is already registered: " + worker.hashCode() + ". Worker count: " + workers.size());
+        }
     }
 
     @Override
     public int getWorkerCount() throws RemoteException {
         int a = workers.size();
+
+        
         if(!isCalculationRunning){
             for(int i = a - 1; i>=0; i--){
                 boolean ok = false;
                 try{
                     ok = workers.get(i).ping();
                 }
-                catch(Exception e){}
-                if(!ok) workers.remove(i);
+                catch(Exception e){
+                    //System.out.println(e.getMessage());
+                }
+                if(!ok) {
+                    int hash = workers.get(i).hashCode();
+                    int eCnt = workersErrorCount.get(hash);
+                    workersErrorCount.put(hash, eCnt + 1);
+                    if (eCnt > 10){
+                        workers.remove(i);
+                        workersErrorCount.remove(hash);
+                        System.out.println(getTimeStr() + " one worker removed (" + hash + "). Remaining: " + workers.size());
+                    }
+                }
+                else{
+                    workersErrorCount.put(workers.get(i).hashCode(), 0);
+                }
             }
             a = workers.size();
         }
+        
+        
         return a;
     }
 
@@ -72,9 +116,10 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             double heightR = sliceHeight*zoom;
             double stepY = heightR / sliceHeight;
 
-            String workerName = "Worker_" + i;
+            String workerName = "Worker_" + i + "[" + worker.hashCode() + "]";
             Future<int[][]> future = executor.submit(() -> {
-                return worker.compute(width, sliceHeight, widthR, heightR, xTopLeftCorner, yTopLeftCorner + finalStartY*stepY, maxIterations, workerName );
+                int[][] result = worker.compute(width, sliceHeight, widthR, heightR, xTopLeftCorner, yTopLeftCorner + finalStartY*stepY, maxIterations, workerName );
+                return result;
             });
 
             futures.add(future);
@@ -99,9 +144,53 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         return finalImage;
     }
 
+    public int[][][] startCalculationOneFramePerWorker(int width, int height, double[] zooms, double pointX, double pointY, int maxIterations){
+        int[][][] finalImages = new int[zooms.length][width][height];
+        if (zooms.length == 0){
+            return finalImages;
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(zooms.length);
+        List<Future<int[][]>> futures = new ArrayList<>();
+
+        for (int i = 0; i < zooms.length; i++) {
+            Worker worker = workers.get(i);
+
+            double widthR = width*zooms[i];
+            double heightR = height*zooms[i];
+            double xTopLeftCorner = pointX - widthR/2;
+            double yTopLeftCorner = pointY - heightR/2;
+
+            String workerName = "Worker_" + i + "[" + worker.hashCode() + "]";
+            Future<int[][]> future = executor.submit(() -> {
+                int[][] result = worker.compute(width, height, widthR, heightR, xTopLeftCorner, yTopLeftCorner, maxIterations, workerName ); 
+                incrementJobStatus(1);
+                return result;
+            });
+
+            futures.add(future);
+        }
+
+        for (int i = 0; i < futures.size(); i++) {
+            try {
+                finalImages[i] = futures.get(i).get();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        executor.shutdown();
+        return finalImages;
+    }
+
     @Override
     public long getCalculationStatus() {
         return jobStatus;
+        //jobStatus >0 : done (number nanoseconds)
+        //jobStatus = 0 : job failed
+        //jobStatus = -0 : running, number of remaining frames
+
     }
 
     @Override
@@ -113,7 +202,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             return;
         }
         if(workers.size() == 0 || anzWorker == 0) {
-            jobStatus = -1;
+            jobStatus = 0;
             return;
         }
 
@@ -122,7 +211,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         System.out.println("Master: start executeJob()");
 
         isCalculationRunning = true;
-        jobStatus = 0;
+        jobStatus = stuffenanzahl*(-1);
         long tStart = System.nanoTime();
 
 
@@ -133,46 +222,37 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
                 double widthR = widthPx*zoom;
                 double heightR = heightPx*zoom;
                 frames[i] = startCalculation(anzWorker, widthPx, heightPx, zoom, zoompunktX - widthR/2, zoompunktY - heightR/2, iterationsanzahl);
+                incrementJobStatus(1);
                 zoom *= zoomFaktor;
             }
         }
         else{
-            int actualWorkerCount = Math.min(anzWorker, workers.size());
-            ExecutorService executor = Executors.newFixedThreadPool(actualWorkerCount);
-            List<Future<int[][]>> futures;
-            int remainingFramesCnt = frames.length;
-            double frameZoom = 1;
-            while (remainingFramesCnt > 0) {
-                futures = new ArrayList<>();
-                for (int i = 0; i < actualWorkerCount; i++) {
-                    if(i >= remainingFramesCnt){
-                        break;
-                    }
-                    Worker worker = workers.get(i);
-                    String workerName = "Worker_" + i;
-                    double widthR = widthPx*frameZoom;
-                    double heightR = heightPx*frameZoom;
-                    Future<int[][]> future = executor.submit(() -> {
-                        return worker.compute(widthPx, heightPx, widthR, heightR,  zoompunktX - widthR/2, zoompunktY - heightR/2, iterationsanzahl, workerName );
-                    });
-                    futures.add(future);
-                    remainingFramesCnt -= 1;
-                    frameZoom = frameZoom * zoomFaktor;
-                }
+            //TODO: divide number of all frames by number of workers
+            //and give multiple frames to each worker.
+            //but for now: single frame to single worker.
 
-                for (int i = 0; i < futures.size(); i++) {
-                    try {
-                        int[][] workerFrame = futures.get(i).get();
-                        frames[frames.length - 1 - remainingFramesCnt + i] = workerFrame;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+            int actualWorkerCount = Math.min(anzWorker, workers.size());
+            int i = 0;
+            double z = 1;
+            for(i = 0; i<frames.length; i+=actualWorkerCount){
+                if(i+actualWorkerCount > (frames.length-1)){
+                    //case, when some frames are remaining on the end
+                    //if frame.length=40, i=39 -> actualWorkerCount = 1
+                    //   frame.length=40, i=38 -> actualWorkerCount = 2
+                    actualWorkerCount = frames.length - i;
+                }
+                double[] zooms = new double[actualWorkerCount];
+                for(int j = 0; j<actualWorkerCount; j++){
+                    zooms[j] = z;
+                    z = z*zoomFaktor;
+                }
+                int[][][] result = startCalculationOneFramePerWorker(widthPx, heightPx, zooms, zoompunktX, zoompunktY, iterationsanzahl);
+                for(int j = 0; j<actualWorkerCount; j++){
+                    frames[i+j] = result[j];
                 }
             }
-            executor.shutdown();
         }
     
-
         long tEnd = System.nanoTime();
         jobStatus = tEnd - tStart;
         isCalculationRunning = false;
@@ -255,6 +335,13 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         }
         
         return c.getRGB();
+    }
+
+    public String getTimeStr(){
+          LocalDateTime date = LocalDateTime.now();
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+          String timeStr = date.format(formatter);
+          return timeStr;
     }
 
 }

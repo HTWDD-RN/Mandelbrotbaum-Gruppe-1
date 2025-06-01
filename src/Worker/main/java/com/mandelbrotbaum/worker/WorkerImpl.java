@@ -14,6 +14,7 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
     private String masterHostName = "";
     private String errorMsg01 = "";
     private boolean isCalculationRunning = false;
+    
 
     public WorkerImpl(MasterInterface master, String masterHost) throws RemoteException {
         super();
@@ -22,7 +23,8 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         Thread t = new Thread(){
                 public void run(){
                     
-                    while(!isInterrupted()) {
+                    //while(!isInterrupted()) {
+                    while(true){
                         try{
                                 if(!isCalculationRunning){
                                     if(getMaster() != null){
@@ -32,6 +34,7 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
                                 Thread.sleep(1000);
                         }
                         catch (InterruptedException e) {
+                            System.out.println("Ticker beendet.");
                             Thread.currentThread().interrupt();
                         }
                         catch(Exception e){
