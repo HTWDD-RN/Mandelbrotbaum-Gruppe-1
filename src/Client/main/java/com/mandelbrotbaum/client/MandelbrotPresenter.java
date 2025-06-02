@@ -64,15 +64,15 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         String action = e.getActionCommand();
         if (action.equals("Ausführen")) {
             System.out.println("pressed: " + action);
-            System.out.println("Zoomfactor: " + view.getZoomFactor());
+            System.out.println("Zoomfactor: " + view.getZoomFactorSpinner().getValue());
             
             //ToDo: read the following values from GUI
-            int stuffenanzahl = 40;
-            int iterationsanzahl = 1000;
-            double zoompunktX = -0.34837308755059104;
-            double zoompunktY = -0.6065038451823017;
-            double zoomFaktor = 0.8;
-            int anzWorker = 4;
+            int stuffenanzahl = (int) view.getNumberOfStepsSpinner().getValue();
+            int iterationsanzahl = (int) view.getIterationSpinner().getValue();
+            double zoompunktX = Double.parseDouble(view.getXPosition().getText());
+            double zoompunktY = Double.parseDouble(view.getYPosition().getText());
+            double zoomFaktor = (double) view.getZoomFactorSpinner().getValue();
+            int anzWorker = (int) view.getWorkSpinner().getValue();
             int anzThreadsProWorker = 3;
             boolean divideSingleFrame = true;
             model.submitJob(stuffenanzahl,

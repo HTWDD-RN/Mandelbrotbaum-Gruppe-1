@@ -99,7 +99,15 @@ public class MandelbrotView extends JPanel {
      */
     public JSpinner getWorkSpinner() {
         return this.workerSpinner;
-    }  
+    }
+
+    /**
+     * Returns the JSpinner used to set the zoom factor
+     * @return JSpinner for the zoom factor
+     */
+    public JSpinner getZoomFactorSpinner() {
+        return this.zoomSpinner;
+    }
 
     /**
      * return the JSpinner used to set the number of iterations
@@ -111,11 +119,28 @@ public class MandelbrotView extends JPanel {
 
     /**
      * returns the combo box used to select the resolution.
-     * @return JComboBox for the resulolutuinthe resolution selection combo box
+     * @return JComboBox for the resolution selection
      */
     public JComboBox<String> getResolutionComboBox() {
-        return resolutionComboBox;
+        return this.resolutionComboBox;
     }
+
+    /**
+     * return the text field used to set coordinate for x axis
+     * @return JTextField for the x axis
+     */
+    public JTextField getXPosition() {
+        return xPosField;
+    }
+
+    /**
+     *  return the text field used to set coordinate for y axis
+     *  @return JTextField for the y axis
+     */
+    public JTextField getYPosition() {
+        return yPosField;
+    }
+
 
     /**
      * hides or sets visible the play button.
@@ -208,6 +233,7 @@ public class MandelbrotView extends JPanel {
         playBtn.addActionListener(this.presenter);
         this.addMouseListener(this.mouseListener);
         this.addMouseWheelListener(this.mouseWheelListener);
+        zoomSpinner.addChangeListener(this.presenter);
 
         frame.add(panel, BorderLayout.NORTH);
         frame.add(this);
