@@ -73,7 +73,7 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
             double zoompunktY = -0.6065038451823017;
             double zoomFaktor = 0.8;
             int anzWorker = 4;
-            int anzThreadsProWorker = 4;
+            int anzThreadsProWorker = 3;
             boolean divideSingleFrame = true;
             model.submitJob(stuffenanzahl,
                             iterationsanzahl,

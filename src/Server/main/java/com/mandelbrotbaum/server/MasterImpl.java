@@ -42,7 +42,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
     }
 
     @Override
-    public void registerWorker(Worker worker) throws RemoteException {
+    public int registerWorker(Worker worker) throws RemoteException {
         boolean found = false;
         for(int i = 0; i<workers.size(); i++){
             if(workers.get(i).hashCode() == worker.hashCode()){
@@ -58,6 +58,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         else{
             System.out.println("Worker trying to register, but it is already registered: " + worker.hashCode() + ". Worker count: " + workers.size());
         }
+        return worker.hashCode();
     }
 
     @Override
@@ -95,7 +96,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         return a;
     }
 
-    public int[][] startCalculation(int workerCount, int width, int height, double zoom, double xTopLeftCorner, double yTopLeftCorner, int maxIterations) throws RemoteException {
+    public int[][] startCalculation(int workerCount, int width, int height, double zoom, double xTopLeftCorner, double yTopLeftCorner, int threadsCnt, int maxIterations) throws RemoteException {
         int actualWorkerCount = Math.min(workerCount, workers.size());
         int sliceHeight = height / actualWorkerCount;
 
@@ -107,18 +108,18 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         for (int i = 0; i < actualWorkerCount; i++) {
             int startY = i * sliceHeight;
             int endY = (i == actualWorkerCount - 1) ? height : (i + 1) * sliceHeight;
+            int finalSliceHeight = endY-startY;
+
             Worker worker = workers.get(i);
 
-            int finalStartY = startY;
-            int finalEndY = endY;
-
             double widthR = width*zoom;
-            double heightR = sliceHeight*zoom;
+            double heightR = finalSliceHeight*zoom;
             double stepY = heightR / sliceHeight;
+            double finalStartY = startY*stepY;
 
             String workerName = "Worker_" + i + "[" + worker.hashCode() + "]";
             Future<int[][]> future = executor.submit(() -> {
-                int[][] result = worker.compute(width, sliceHeight, widthR, heightR, xTopLeftCorner, yTopLeftCorner + finalStartY*stepY, maxIterations, workerName );
+                int[][] result = worker.compute(width, finalSliceHeight, widthR, heightR, xTopLeftCorner, yTopLeftCorner + finalStartY, maxIterations, threadsCnt, workerName );
                 return result;
             });
 
@@ -144,7 +145,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         return finalImage;
     }
 
-    public int[][][] startCalculationOneFramePerWorker(int width, int height, double[] zooms, double pointX, double pointY, int maxIterations){
+    public int[][][] startCalculationOneFramePerWorker(int width, int height, double[] zooms, double pointX, double pointY, int threadsCnt, int maxIterations){
         int[][][] finalImages = new int[zooms.length][width][height];
         if (zooms.length == 0){
             return finalImages;
@@ -163,7 +164,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
 
             String workerName = "Worker_" + i + "[" + worker.hashCode() + "]";
             Future<int[][]> future = executor.submit(() -> {
-                int[][] result = worker.compute(width, height, widthR, heightR, xTopLeftCorner, yTopLeftCorner, maxIterations, workerName ); 
+                int[][] result = worker.compute(width, height, widthR, heightR, xTopLeftCorner, yTopLeftCorner, maxIterations, threadsCnt, workerName ); 
                 incrementJobStatus(1);
                 return result;
             });
@@ -221,7 +222,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             for(int i = 0; i<frames.length; i++){
                 double widthR = widthPx*zoom;
                 double heightR = heightPx*zoom;
-                frames[i] = startCalculation(anzWorker, widthPx, heightPx, zoom, zoompunktX - widthR/2, zoompunktY - heightR/2, iterationsanzahl);
+                frames[i] = startCalculation(anzWorker, widthPx, heightPx, zoom, zoompunktX - widthR/2, zoompunktY - heightR/2, anzThreadsProWorker, iterationsanzahl);
                 incrementJobStatus(1);
                 zoom *= zoomFaktor;
             }
@@ -246,7 +247,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
                     zooms[j] = z;
                     z = z*zoomFaktor;
                 }
-                int[][][] result = startCalculationOneFramePerWorker(widthPx, heightPx, zooms, zoompunktX, zoompunktY, iterationsanzahl);
+                int[][][] result = startCalculationOneFramePerWorker(widthPx, heightPx, zooms, zoompunktX, zoompunktY, anzThreadsProWorker, iterationsanzahl);
                 for(int j = 0; j<actualWorkerCount; j++){
                     frames[i+j] = result[j];
                 }
