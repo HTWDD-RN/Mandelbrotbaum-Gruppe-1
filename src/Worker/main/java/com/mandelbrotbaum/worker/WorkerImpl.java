@@ -20,35 +20,19 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
     private String errorMsg01 = "";
     private boolean isCalculationRunning = false;
     private int idOnMaster = 0;
+
+    private final Ticker ticker;
+    private List<Future<int[][]>> futures;
     
 
     public WorkerImpl(MasterInterface master, String masterHost) throws RemoteException {
         super();
         _master = master;
         masterHostName = masterHost;
-        Thread t = new Thread(){
-                public void run(){
-                    
-                    //while(!isInterrupted()) {
-                    while(true){
-                        try{
-                                if(!isCalculationRunning){
-                                    if(getMaster() != null){
-                                        getMaster().getWorkerCount(); //pinging the master
-                                    }
-                                }
-                                Thread.sleep(1000);
-                        }
-                        catch (InterruptedException e) {
-                            System.out.println("Ticker beendet.");
-                            Thread.currentThread().interrupt();
-                        }
-                        catch(Exception e){
-                            setMaster(null);
-                        }
-                    }
-                }};
-        t.start();
+        futures = new ArrayList<>();
+        this.ticker = new Ticker(this);
+        this.ticker.setDaemon(true);
+        this.ticker.start();
     }
 
     public void setMaster(MasterInterface m){
@@ -80,17 +64,30 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         return _master;
     }
 
+    public synchronized void checkMaster(){
+        if(!isCalculationRunning){
+            if(getMaster() != null){
+                try{
+                    getMaster().getWorkerCount(); //pinging the master
+                }
+                catch(RemoteException e){
+                    setMaster(null);
+                }
+            }
+        }
+    }
+
 
     @Override
     public int[][] compute(int wPx, int hPx, double wR, double hR, double x0, double y0, int maxIterations, int threadsCnt, String workerName) throws RemoteException {
-        int sliceHeightPx = hPx / threadsCnt;
-
         isCalculationRunning = true;
+
+        int sliceHeightPx = hPx / threadsCnt;
 
         int[][] finalImage = new int[wPx][hPx];
 
         ExecutorService executor = Executors.newFixedThreadPool(threadsCnt);
-        List<Future<int[][]>> futures = new ArrayList<>();
+        futures = new ArrayList<>();
 
         for (int i = 0; i < threadsCnt; i++) {
             int startY = i * sliceHeightPx;

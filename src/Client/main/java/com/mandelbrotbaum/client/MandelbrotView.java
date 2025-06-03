@@ -182,7 +182,7 @@ public class MandelbrotView extends JPanel {
         panel.add(zoomSpinner);
 
         panel.add(new JLabel("Stufenanzahl: "));
-        numberOfStepsSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 100, 1));
+        numberOfStepsSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 200, 1));
         panel.add(numberOfStepsSpinner);
         
 
@@ -192,7 +192,7 @@ public class MandelbrotView extends JPanel {
         panel.add(workerSpinner);
 
         panel.add(new JLabel("Iterationsanzahl: "));
-        iterationSpinner = new JSpinner(new SpinnerNumberModel(100, 1, 1000, 1));
+        iterationSpinner = new JSpinner(new SpinnerNumberModel(1000, 1, 10000, 1));
         panel.add(iterationSpinner);
 
         panel.add(new JLabel(""));

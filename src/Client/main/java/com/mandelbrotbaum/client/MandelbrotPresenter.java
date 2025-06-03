@@ -35,9 +35,9 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         System.out.println("Bin im ChangeEvent");
         if (source == view.getNumberOfStepsSpinner()) {
             int numberSteps = (Integer) view.getNumberOfStepsSpinner().getValue();
-            if (numberSteps < 1 || numberSteps > 100) {
+            if (numberSteps < 1 || numberSteps > 200) {
                 isUpdating = true;
-                view.getNumberOfStepsSpinner().setValue(100);
+                //view.getNumberOfStepsSpinner().setValue(100);
                 isUpdating = false;
             }
         }
@@ -51,9 +51,9 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         }
         else if (source == view.getIterationSpinner()) {
             int numberIteration = (Integer) view.getIterationSpinner().getValue();
-            if (numberIteration > 1 || numberIteration < 1000){
+            if (numberIteration < 1 || numberIteration > 10000){
                 isUpdating = true;
-                view.getIterationSpinner().setValue(100);
+                view.getIterationSpinner().setValue(1000);
                 isUpdating = false;
             }
         }
@@ -69,8 +69,20 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
             //ToDo: read the following values from GUI
             int stuffenanzahl = (int) view.getNumberOfStepsSpinner().getValue();
             int iterationsanzahl = (int) view.getIterationSpinner().getValue();
-            double zoompunktX = Double.parseDouble(view.getXPosition().getText());
-            double zoompunktY = Double.parseDouble(view.getYPosition().getText());
+            double zoompunktX = -0.34837308755059104;
+            try{
+                zoompunktX = Double.parseDouble(view.getXPosition().getText());
+            }
+            catch(Exception ex){
+                view.getXPosition().setText("" + zoompunktX);
+            }
+            double zoompunktY = -0.6065038451823017;
+            try{
+                zoompunktY = Double.parseDouble(view.getYPosition().getText());
+            }
+            catch(Exception ex){
+                view.getYPosition().setText("" + zoompunktY);
+            }
             double zoomFaktor = (double) view.getZoomFactorSpinner().getValue();
             int anzWorker = (int) view.getWorkSpinner().getValue();
             int anzThreadsProWorker = 3;

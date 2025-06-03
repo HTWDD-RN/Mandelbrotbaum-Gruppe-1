@@ -19,12 +19,13 @@ public class WorkerMain {
 
         MasterInterface master = null;
         WorkerImpl worker = null;
+        int idOnMaster = 0;
         try {
             master = (MasterInterface) Naming.lookup("rmi://" + serverHost + "/Master");
             worker = new WorkerImpl(master, serverHost);
-            master.registerWorker(worker);
+            idOnMaster = master.registerWorker(worker);
 
-            System.out.println("Worker registered.");
+            System.out.println("Worker registered with id: " + idOnMaster);
         } catch (Exception e) {
             e.printStackTrace();
             try{
@@ -33,6 +34,7 @@ public class WorkerMain {
             catch(Exception e2){}
         }
 
-        
+        System.out.println("Number of CPU Cores: " + Runtime.getRuntime().availableProcessors());
+       
     }
 }

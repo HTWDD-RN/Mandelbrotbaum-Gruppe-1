@@ -119,7 +119,7 @@ public class Model {
             }
             catch(Exception e){
                 if(errorMsg01.isEmpty()){
-                    System.out.println("Ausnahme in Model.checkCalculation(): getWorkersCount()");
+                    System.out.println(getTimeStr() + " broken connection to master.");
                 }
             }
             if(cnt != cntWorkers){
@@ -349,4 +349,12 @@ public class Model {
             }
         }
     }
+
+    public String getTimeStr(){
+          LocalDateTime date = LocalDateTime.now();
+          DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+          String timeStr = date.format(formatter);
+          return timeStr;
+    }
+
 }

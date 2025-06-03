@@ -23,7 +23,10 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
     //Key - hashcode of the worker, value: count of ping failures;
     private HashMap<Integer, Integer> workersErrorCount = new HashMap<>();
 
+    private final Ticker ticker;
+
     private boolean isCalculationRunning = false;
+    private boolean isCalculationCanceled = false;
     private long jobStatus = -1;
     public synchronized void incrementJobStatus(int inc){
         jobStatus += inc;
@@ -39,6 +42,9 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
     public MasterImpl() throws RemoteException {
         super();
         workers = new CopyOnWriteArrayList<>();
+        this.ticker = new Ticker(this);
+        this.ticker.setDaemon(true);
+        this.ticker.start();
     }
 
     @Override
@@ -64,9 +70,12 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
     @Override
     public int getWorkerCount() throws RemoteException {
         int a = workers.size();
+        return a;
+    }
 
-        
+    public synchronized void checkWorkers(){
         if(!isCalculationRunning){
+            int a = workers.size();
             for(int i = a - 1; i>=0; i--){
                 boolean ok = false;
                 try{
@@ -78,7 +87,7 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
                 if(!ok) {
                     int hash = workers.get(i).hashCode();
                     int eCnt = workersErrorCount.get(hash);
-                    workersErrorCount.put(hash, eCnt + 1);
+                    workersErrorCount.put(hash, eCnt + 1); //incrementing errors
                     if (eCnt > 10){
                         workers.remove(i);
                         workersErrorCount.remove(hash);
@@ -86,14 +95,10 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
                     }
                 }
                 else{
-                    workersErrorCount.put(workers.get(i).hashCode(), 0);
+                    workersErrorCount.put(workers.get(i).hashCode(), 0); //resetting errors
                 }
             }
-            a = workers.size();
         }
-        
-        
-        return a;
     }
 
     public int[][] startCalculation(int workerCount, int width, int height, double zoom, double xTopLeftCorner, double yTopLeftCorner, int threadsCnt, int maxIterations) throws RemoteException {
@@ -199,7 +204,9 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             double zoomFaktor, int anzWorker, int anzThreadsProWorker, boolean divideSingleFrame)
             throws RemoteException {
         if(isCalculationRunning){
-            System.out.println("another job is running");
+            //user pressed the button during calculation.
+            //we suppose he/she wants to stop the current calculation.
+            isCalculationCanceled = true;
             return;
         }
         if(workers.size() == 0 || anzWorker == 0) {
@@ -219,10 +226,22 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
         frames = new int[stuffenanzahl][widthPx][heightPx];
         if(divideSingleFrame){
             double zoom = 1;
+            if(zoompunktX == 100 && zoompunktY == 100){
+                //for debugging purposes I need the screen to be always black
+                //it means each pixel becomes the full iterations count.
+                zoompunktX = 0;
+                zoompunktY = 0;
+                zoom = 0.00001;
+            }
             for(int i = 0; i<frames.length; i++){
                 double widthR = widthPx*zoom;
                 double heightR = heightPx*zoom;
-                frames[i] = startCalculation(anzWorker, widthPx, heightPx, zoom, zoompunktX - widthR/2, zoompunktY - heightR/2, anzThreadsProWorker, iterationsanzahl);
+                if(!isCalculationCanceled){
+                    frames[i] = startCalculation(anzWorker, widthPx, heightPx, zoom, zoompunktX - widthR/2, zoompunktY - heightR/2, anzThreadsProWorker, iterationsanzahl);
+                }
+                else{
+                    frames[i] = new int[widthPx][heightPx];
+                }
                 incrementJobStatus(1);
                 zoom *= zoomFaktor;
             }
@@ -236,24 +255,32 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
             int i = 0;
             double z = 1;
             for(i = 0; i<frames.length; i+=actualWorkerCount){
-                if(i+actualWorkerCount > (frames.length-1)){
-                    //case, when some frames are remaining on the end
-                    //if frame.length=40, i=39 -> actualWorkerCount = 1
-                    //   frame.length=40, i=38 -> actualWorkerCount = 2
-                    actualWorkerCount = frames.length - i;
+                    if(i+actualWorkerCount > (frames.length-1)){
+                        //case, when some frames are remaining on the end
+                        //if frame.length=40, i=39 -> actualWorkerCount = 1
+                        //   frame.length=40, i=38 -> actualWorkerCount = 2
+                        actualWorkerCount = frames.length - i;
+                    }
+                if(!isCalculationCanceled){
+                    double[] zooms = new double[actualWorkerCount];
+                    for(int j = 0; j<actualWorkerCount; j++){
+                        zooms[j] = z;
+                        z = z*zoomFaktor;
+                    }
+                    int[][][] result = startCalculationOneFramePerWorker(widthPx, heightPx, zooms, zoompunktX, zoompunktY, anzThreadsProWorker, iterationsanzahl);
+                    for(int j = 0; j<actualWorkerCount; j++){
+                        frames[i+j] = result[j];
+                    }
                 }
-                double[] zooms = new double[actualWorkerCount];
-                for(int j = 0; j<actualWorkerCount; j++){
-                    zooms[j] = z;
-                    z = z*zoomFaktor;
-                }
-                int[][][] result = startCalculationOneFramePerWorker(widthPx, heightPx, zooms, zoompunktX, zoompunktY, anzThreadsProWorker, iterationsanzahl);
-                for(int j = 0; j<actualWorkerCount; j++){
-                    frames[i+j] = result[j];
+                else{
+                    for(int j = 0; j<actualWorkerCount; j++){
+                        frames[i+j] = new int[widthPx][heightPx];
+                    }
                 }
             }
         }
     
+        isCalculationCanceled = false;
         long tEnd = System.nanoTime();
         jobStatus = tEnd - tStart;
         isCalculationRunning = false;
@@ -314,28 +341,32 @@ public class MasterImpl extends UnicastRemoteObject implements MasterInterface {
 
         if(colValue <= levelsCnt*1){ // red part
             g = (float)colValue / levelsCnt;
+            if(g > 1) g = 1;
             r = 0;
             b = 0;
         }
         else if(colValue <= levelsCnt*2){ // green part
             g = 1;
             r = ((float)colValue - levelsCnt) / levelsCnt;
+            if(r > 1) r = 1;
             b = 0;
         }
         else{ // blue part
             g = 1;
             r = 1;
             b = ((float)colValue - levelsCnt*2) / levelsCnt;
+            if(b > 1) b = 1;
         }
-    
+
         Color c = new Color(1,1,1);
         try{
             c = new Color(r, g, b);
         }
         catch(Exception e){
+            int dummy = 5;
         }
-        
-        return c.getRGB();
+        int result = c.getRGB();
+        return result;
     }
 
     public String getTimeStr(){
