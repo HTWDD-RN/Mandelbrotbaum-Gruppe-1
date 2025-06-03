@@ -188,7 +188,7 @@ public class MandelbrotView extends JPanel {
 
         cntWorkersLbl = new JLabel("Anzahl Worker: ");
         panel.add(cntWorkersLbl);
-        workerSpinner = new JSpinner(new SpinnerNumberModel(4,2,16,2));
+        workerSpinner = new JSpinner(new SpinnerNumberModel(4,1,16,2));
         panel.add(workerSpinner);
 
         panel.add(new JLabel("Iterationsanzahl: "));
@@ -198,11 +198,11 @@ public class MandelbrotView extends JPanel {
         panel.add(new JLabel(""));
         panel.add(new JLabel(""));
 
-        panel.add(new JLabel("Zoompunkt: "));
+        panel.add(new JLabel("Zoompunkt: (x, y) "));
 
-        xPosField = new JTextField("x-position",16);
+        xPosField = new JTextField("-0.34837308755059104",20);
         panel.add(xPosField);
-        yPosField = new JTextField("y-position",16);
+        yPosField = new JTextField("-0.6065038451823017",20);
         panel.add(yPosField);
         
         execBtn = new JButton("Ausführen");

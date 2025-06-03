@@ -43,7 +43,7 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
         }
         else if (source == view.getWorkSpinner()) {
             int numberWorker = (Integer) view.getWorkSpinner().getValue();
-            if (numberWorker < 2 || numberWorker > 16) {
+            if (numberWorker < 1 || numberWorker > 16) {
                 isUpdating = true;
                 view.getWorkSpinner().setValue(4);
                 isUpdating = false;
