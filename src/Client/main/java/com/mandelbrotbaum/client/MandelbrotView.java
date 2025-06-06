@@ -20,9 +20,10 @@ public class MandelbrotView extends JPanel {
     private JSpinner workerSpinner = null;
     private JSpinner iterationSpinner = null;
     private JComboBox<String> resolutionComboBox = null;
+    private JComboBox<Integer> threadsProWorkerComboBox = null;
     private JTextField xPosField = null;
     private JTextField yPosField = null;
-    private final String[] resolutions = {"1024 x 768", "1920 x 1080"};
+    private final String[] resolutions = {"1024 x 768", "800 x 600", "1920 x 1080"};
     private JButton execBtn = null;
     private JButton playBtn = null;
     private JLabel jobStatusLbl = null;
@@ -125,6 +126,10 @@ public class MandelbrotView extends JPanel {
         return this.resolutionComboBox;
     }
 
+    public JComboBox<Integer> getThreadsProWorkerCombobox(){
+        return this.threadsProWorkerComboBox;
+    }
+
     /**
      * return the text field used to set coordinate for x axis
      * @return JTextField for the x axis
@@ -195,8 +200,10 @@ public class MandelbrotView extends JPanel {
         iterationSpinner = new JSpinner(new SpinnerNumberModel(1000, 1, 10000, 1));
         panel.add(iterationSpinner);
 
-        panel.add(new JLabel(""));
-        panel.add(new JLabel(""));
+        panel.add(new JLabel("Threads pro worker"));
+        Integer[] cmbVals = {1, 2, 3, 4};
+        threadsProWorkerComboBox = new JComboBox<Integer>(cmbVals);
+        panel.add(threadsProWorkerComboBox);
 
         panel.add(new JLabel("Zoompunkt: (x, y) "));
 
@@ -229,6 +236,7 @@ public class MandelbrotView extends JPanel {
         xPosField.addMouseListener(resetTextFieldListener);
         yPosField.addMouseListener(resetTextFieldListener);
         resolutionComboBox.addActionListener(this.presenter);
+        threadsProWorkerComboBox.addActionListener(this.presenter);
         execBtn.addActionListener(this.presenter);
         playBtn.addActionListener(this.presenter);
         this.addMouseListener(this.mouseListener);

@@ -85,7 +85,7 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
             }
             double zoomFaktor = (double) view.getZoomFactorSpinner().getValue();
             int anzWorker = (int) view.getWorkSpinner().getValue();
-            int anzThreadsProWorker = 3;
+            int anzThreadsProWorker = (Integer)view.getThreadsProWorkerCombobox().getSelectedItem();
             boolean divideSingleFrame = true;
             model.submitJob(stuffenanzahl,
                             iterationsanzahl,
@@ -103,10 +103,13 @@ public class MandelbrotPresenter implements ActionListener, ChangeListener {
              String selected = (String) view.getResolutionComboBox().getSelectedItem();
              if(selected.equals("1920 x 1080")){
                 //model.setFrameSize(1920, 1080);
-                model.setFrameSize(800, 600);
+                model.setFrameSize(1920, 1080);
              }
-             if(selected.equals("1024 x 768")){
+             else if(selected.equals("1024 x 768")){
                 model.setFrameSize(1024, 768);
+             }
+             else if(selected.equals("800 x 600")){
+                model.setFrameSize(800, 600);
              }
              System.out.println(selected);
         }
