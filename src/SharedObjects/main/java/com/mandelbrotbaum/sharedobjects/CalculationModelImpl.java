@@ -29,7 +29,7 @@ public class CalculationModelImpl extends UnicastRemoteObject implements Calcula
 
                 //debug: last line is white
                 if(y == (hPx - 1)){
-                    c = 2;
+                    //c = 2;
                 }
                 //end debug
 
@@ -40,9 +40,7 @@ public class CalculationModelImpl extends UnicastRemoteObject implements Calcula
             }
         }
 
-        PixelFont.outputPixelMatrix(PixelFont.getPixelMatrix(
-            workerName + ", Ecke: (" + x0 + " | " + y0 + "); width: " + wR + "; hight: " + hR + "; zoom = " + (wR/wPx)
-            ), a);
+        // PixelFont.outputPixelMatrix(PixelFont.getPixelMatrix(workerName + ", Ecke: (" + x0 + " | " + y0 + "); width: " + wR + "; hight: " + hR + "; zoom = " + (wR/wPx)), a);
 
         return a;
     }
